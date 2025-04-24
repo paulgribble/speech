@@ -1,0 +1,122 @@
+<SESSION name="WILL">
+
+<INFO>
+	<PREFIX name="WILL" />
+	<PARTICIPANT id="S04" />
+	<ACQHW>
+        <!--
+		<MODULE name="acq_AUDIO">
+			<AUDIO srate="11025" record="0" />
+			<DISPLAY color="0 0 1" />
+		</MODULE> 
+            -->
+		<MODULE name="acq_SIBMOD">
+			<AUDIO device="Scarlett 8i6 USB" record="1" />
+			<SIBMOD frame="110" overlap=".3" thresh=".1" noisy="0" />
+		</MODULE>
+	</ACQHW>
+	<CSS>
+body {
+	background-color: white;
+}
+#instr {
+	margin-top: 100px;
+	margin-left: 50px;
+	margin-right: 50px;
+	font-family: Arial;
+	font-size: 64px;
+	font-weight: bold;
+	text-align: center;
+	color: 000000;
+}
+#stim {
+	margin-top: 100px;
+	margin-left: 20px;
+	margin-right: 20px;
+	font-family: Times New Roman;
+	font-size: 64px;
+	text-align: center;
+	color: 00007F;
+}
+	</CSS>
+</INFO>
+  
+<DEFS>
+
+<!-- BASIC:  the "@0" parameter is the same as the token content used to form the filename -->
+
+	<DEFBLOCK name="BASELINE" code="B" nreps="8" rand="1">  <!-- 32 baseline trials -->
+		<TEMPLATE>
+			<STIMULUS>
+				<HTML><![CDATA[<div id="stim">@0</div>]]></HTML>
+<!--				<HANDLER function="SetSMShift" arg="@1" /> -->
+			</STIMULUS>
+		</TEMPLATE>
+		<TOKEN>see</TOKEN>
+		<TOKEN>she</TOKEN>
+		<TOKEN>sue</TOKEN>
+		<TOKEN>shoe</TOKEN>
+    </DEFBLOCK>
+
+    <DEFBLOCK name="EXPERIMENT" code="E" nreps="15" rand="1">  <!-- 30 trials per exp block -->
+		<TEMPLATE>
+			<STIMULUS>
+				<HTML><![CDATA[<div id="stim">@0</div>]]></HTML>
+				<HANDLER function="SetSMShift" arg="@1" />
+			</STIMULUS>
+		</TEMPLATE>
+<!--		<TOKEN a1="-12">see</TOKEN>   shift down (/s/ -> /sh/) -->
+		<TOKEN a1="8">she</TOKEN>    <!-- shift up (/sh/ -> /s/) -->
+<!--		<TOKEN a1="-12">sue</TOKEN> -->
+		<TOKEN a1="8">shoe</TOKEN>
+    </DEFBLOCK>
+
+</DEFS>
+
+<ORDER>
+
+	<PAUSE prompt="Begin" dur="3" ISI="0">
+		<![CDATA[<div id="instr">Ready to begin?</div>]]>
+	</PAUSE>
+    
+	<PAUSE prompt="Basic Presentation">
+		<![CDATA[<div id="instr">Please read the words aloud as they appear</div>]]>
+	</PAUSE>
+
+	<BLOCK name="BASELINE" />
+
+	<PAUSE prompt="Basic Presentation">
+		<![CDATA[<div id="instr">Please pause for data collection.</div>]]>
+	</PAUSE>
+
+    <BLOCK name="EXPERIMENT" />
+    
+    <PAUSE prompt="Basic Presentation">
+		<![CDATA[<div id="instr">Please pause for data collection.</div>]]>
+	</PAUSE>
+
+    <BLOCK name="EXPERIMENT" />
+
+    <PAUSE prompt="Basic Presentation">
+		<![CDATA[<div id="instr">Please pause for data collection.</div>]]>
+	</PAUSE>
+
+    <BLOCK name="EXPERIMENT" />
+
+    <PAUSE prompt="Basic Presentation">
+		<![CDATA[<div id="instr">Please pause for data collection.</div>]]>
+	</PAUSE>
+
+    <BLOCK name="EXPERIMENT" />
+    
+    <PAUSE prompt="Basic Presentation">
+		<![CDATA[<div id="instr">Please pause for data collection.</div>]]>
+	</PAUSE>
+
+	<PAUSE prompt="End">
+		<![CDATA[<div id="instr">All Done – Thanks!</div>]]>
+	</PAUSE>
+	
+</ORDER>
+
+</SESSION>
