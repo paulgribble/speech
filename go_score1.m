@@ -53,17 +53,18 @@ for i=1:n_wav
     sound(y1, Fs);
     title('CLICK CENTRE OF SIBILANT')
     g1 = ginput(1);
-    sib_centre(i) = g1(1);
+    g1 = g1(1);
+    sib_centre(i) = g1;
     subplot(2,1,1)
-    xline([g1(1), g1(1)], 'r--', 'LineWidth', 1);
+    xline([g1, g1], 'r--', 'LineWidth', 1);
     subplot(2,1,2)
-    xline([g1(1), g1(1)], 'r--', 'LineWidth', 1);
+    xline([g1, g1], 'r--', 'LineWidth', 1);
     [c1,skew,kurt,z,f] = ComputeCOG(y(:,1),Fs,g1);
     c1_msg = sprintf('the spectral centroid is %.0f Hz', round(c1));
     disp(c1_msg)
     title(c1_msg)
     yline([c1, c1]/1000, 'r--', 'LineWidth', 1);
-    pause(0.5)
+%    pause(0.5)
     subplot(2,1,1)
     hold off
     subplot(2,1,2)
@@ -81,8 +82,27 @@ token_end = token_end';
 sib_centre = sib_centre';
 sib_cog = sib_cog';
 
-t = table(filedir, filename, participant, trial_num, token, token_start, token_end, sib_centre, sib_cog);
+out_table = table(filedir, filename, participant, trial_num, token, token_start, token_end, sib_centre, sib_cog);
 
 csv_filename = input('ENTER FILENAME FOR .csv FILE: ',"s");
-writetable(t, csv_filename);
+writetable(out_table, csv_filename);
 
+i_she  = find(out_table.token=='she');
+i_shoe = find(out_table.token=='shoe');
+i_see  = find(out_table.token=='see');
+i_sue  = find(out_table.token=='sue');
+
+f1 = figure;
+hold on
+plot(out_table.trial_num(i_she), out_table.sib_cog(i_she),'bs')
+plot(out_table.trial_num(i_shoe), out_table.sib_cog(i_shoe),'bo')
+plot(out_table.trial_num(i_see), out_table.sib_cog(i_see),'rs')
+plot(out_table.trial_num(i_sue), out_table.sib_cog(i_sue),'ro')
+legend({'/she/','/shoe/','/see/','/sue'}, 'location','southeast')
+grid on
+xlabel('TRIAL NUMBER')
+ylabel('SIBILANT COG (Hz)')
+title(out_table.filedir(1), 'interpreter','none')
+fig_fname = strsplit(csv_filename,'.');
+fig_fname = fig_fname(1) + ".png";
+saveas(f1, fig_fname)
