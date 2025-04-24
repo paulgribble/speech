@@ -79,7 +79,10 @@ nw = (nTaper + 1) / 2;
 [z,f] = pmtm(s,nw,[],sRate);
 z = 10 * log10(z);
 
+z = z - min(z);
+
 % compute spectral moments
+
 p = z ./ sum(z);		% normalized power
 COG = sum(f .* p);		% weighted spectral mean (COG)
 CF = f - COG;			% centered frequencies
