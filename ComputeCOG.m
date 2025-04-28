@@ -4,11 +4,11 @@ function [COG,skew,kurt,z,f] = ComputeCOG(s,sRate,t,varargin)
 %	usage:  [COG,skew,kurt,z,f] = ComputeCOG(s, sRate, t, ...)
 %
 % given signal vector S sampled at SRATE Hz computes spectral center of gravity 
-% measures at offset time T (secs) using the methods of Forrest et al. (1988) 
+% measures at offset(s) time T (secs) using the methods of Forrest et al. (1988) 
 % applied to a multitapered power spectral density estimate centered on T
 %
-% returns spectral moments M1 (COG), M3 (SKEWness), and M4 (KURTosis)
-% optionall returns power spectrum Z sampled at frequencies F
+% returns spectral moments M1 (COG), M3 (SKEWness), and M4 (KURTosis) [1 x nOffsets]
+% optionally returns power spectrum Z sampled at frequencies F [nFreq x nOffsets]
 % plots spectrum if no return arguments requested
 %
 % Moments describe how a function differs from a normal Gaussian distribution.  To use 
@@ -40,6 +40,7 @@ function [COG,skew,kurt,z,f] = ComputeCOG(s,sRate,t,varargin)
 % mkt 06/16 use pmtm (multitaper spectrum)
 % mkt 03/25 facelift
 % mkt 04/25 fix z < 0 inversion bug (thanks to P. Gribble)
+% mkt 04/25 compute measures for multiple offsets
 
 % defaults
 nTaper = 7;		% number of tapers averaged for the PSD estimate
@@ -58,41 +59,49 @@ cellfun(@(x) assignin('caller', x, p.Results.(x)), fieldnames(p.Results));
 % ensure vector of monodimensional samples
 if min(size(s)) > 1, error('expecting vector of monodimensional samples'); end
 s = s(:);
+t = t(:);
 nSamps = length(s);
+nOffs = length(t);
+wSize = round(wSize/1000*sRate);	% -> samps
 
 % pre-emphasize
 if preEmp > 0, s = filter([1 -preEmp], 1, s); end
 
+% loop over offsets
+for ti = 1 : nOffs
+
 % extract analysis window
-ts = floor(t*sRate)+1;				% sample offset
-wSize = round(wSize/1000*sRate);	% -> samps
-head = ts - round(wSize/2);
-if head < 1, head = 1; end
-tail = head + wSize - 1;
-if tail > nSamps
-	tail = nSamps;
-	head = tail - wSize + 1;
-end
-s = s(head:tail);
+	ts = floor(t(ti)*sRate)+1;			% sample offset
+	
+	head = ts - round(wSize/2);
+	if head < 1, head = 1; end
+	tail = head + wSize - 1;
+	if tail > nSamps
+		tail = nSamps;
+		head = tail - wSize + 1;
+	end
+	sw = s(head:tail);
 
 % compute tapered power spectrum
-nw = (nTaper + 1) / 2;
-[z,f] = pmtm(s,nw,[],sRate);
-z = 10 * log10(z);
+	nw = (nTaper + 1) / 2;
+	[q,f] = pmtm(sw,nw,[],sRate);
+	q = 10 * log10(q);
+	z(:,ti) = q;
 
 % compute spectral moments
-z = z - min(z);	% P. Gribble: ensure spectral orientation retained for z < 0
-p = z ./ sum(z);		% normalized power
-COG = sum(f .* p);		% weighted spectral mean (COG)
-CF = f - COG;			% centered frequencies
-M2 = sum(CF.^2 .* p);	% variance around M1
-M3 = sum(CF.^3 .* p);	% skewness
-M4 = sum(CF.^4 .* p);	% kurtosis
+	q = q - min(q);	% P. Gribble: ensure spectral orientation retained for z < 0
+	p = q ./ sum(q);		% normalized power
+	COG(ti) = sum(f .* p);	% weighted spectral mean (COG)
+	CF = f - COG(ti);		% centered frequencies
+	M2 = sum(CF.^2 .* p);	% variance around M1
+	M3 = sum(CF.^3 .* p);	% skewness
+	M4 = sum(CF.^4 .* p);	% kurtosis
 
 % adjust skewness and kurtosis for generalization across shifts in center frequency 
 % and frequency scale that can occur between speakers producing the same sound
-skew = M3/M2^1.5;
-kurt = M4/M2^2 - 3;
+	skew(ti) = M3/M2^1.5;
+	kurt(ti) = M4/M2^2 - 3;
+end
 
 if nargout > 0, return; end
 
@@ -100,21 +109,37 @@ if nargout > 0, return; end
 figure
 title(tiledlayout('vertical'),inputname(1),'interpreter','none','fontsize',20)
 ah = nexttile;
-ht = ([head tail]-1)/sRate;
-x = linspace(ht(1),ht(2),wSize)';
+if nOffs > 1
+	x = linspace(0,length(s)/sRate,length(s))';
+	ht = x([1 end]);
+else
+	ht = ([head tail]-1)/sRate;
+	x = linspace(ht(1),ht(2),wSize)';
+	s = sw;
+end
 plot(x,s)
 y = max(abs(s));
-line([t t],[-y y],'color','r','linewidth',1.5)
+line([t t]',[-y;y],'color','r','linewidth',1.5)
 set(ah,'xlim',ht,'xgrid','on','ygrid','on')
 xlabel('secs')
-title(sprintf('t = %.3f',t),'fontweight','normal','fontsize',14)
+if nOffs == 1
+	title(sprintf('t = %.3f',t),'fontweight','normal','fontsize',14)
+end
 
 ah = nexttile([2 1]);
-plot(f/1000,z,'color',[0 .6 0])
-y = [min(z)-range(z)/5 max(z)+range(z)/5];
-line([COG COG]/1000,y,'color','r','linewidth',1.5)
+lh = plot(f/1000,z,'linewidth',1.5);
+if nOffs > 1
+	c = hsv(nOffs);
+	for k = 1 : nOffs, lh(k).Color = c(k,:); end
+else
+	lh.Color = [0 .6 0]; 
+	y = [min(z,[],'all')-range(z,'all')/5 max(z,[],'all')+range(z,'all')/5];
+	line([COG COG]/1000,y,'color','r','linewidth',1.5)
+end
 set(ah,'xlim',f([1 end])/1000,'xgrid','on','ygrid','on')
 xlabel('kHz') ; ylabel('dB')
-title(sprintf('COG: %.0f Hz  SKEW: %.2f  KURT: %.2f',COG,skew,kurt),'fontweight','normal','fontsize',14)
+if nOffs == 1
+	title(sprintf('COG: %.0f Hz  SKEW: %.2f  KURT: %.2f',COG,skew,kurt),'fontweight','normal','fontsize',14)
+end
 
 clear COG skew kurt
