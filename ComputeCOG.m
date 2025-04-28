@@ -39,6 +39,7 @@ function [COG,skew,kurt,z,f] = ComputeCOG(s,sRate,t,varargin)
 % mkt 01/09
 % mkt 06/16 use pmtm (multitaper spectrum)
 % mkt 03/25 facelift
+% mkt 04/25 fix z < 0 inversion bug (thanks to P. Gribble)
 
 % defaults
 nTaper = 7;		% number of tapers averaged for the PSD estimate
@@ -79,10 +80,8 @@ nw = (nTaper + 1) / 2;
 [z,f] = pmtm(s,nw,[],sRate);
 z = 10 * log10(z);
 
-z = z - min(z);
-
 % compute spectral moments
-
+z = z - min(z);	% P. Gribble: ensure spectral orientation retained for z < 0
 p = z ./ sum(z);		% normalized power
 COG = sum(f .* p);		% weighted spectral mean (COG)
 CF = f - COG;			% centered frequencies
@@ -91,7 +90,7 @@ M3 = sum(CF.^3 .* p);	% skewness
 M4 = sum(CF.^4 .* p);	% kurtosis
 
 % adjust skewness and kurtosis for generalization across shifts in center frequency 
-% and frequency scale that can occur between subjects producing the same sound
+% and frequency scale that can occur between speakers producing the same sound
 skew = M3/M2^1.5;
 kurt = M4/M2^2 - 3;
 
