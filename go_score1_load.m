@@ -1,3 +1,4 @@
+function out = go_score1_load(clicks)
 
 selpath = uigetdir;
 if isdir(selpath)
@@ -58,8 +59,9 @@ for i=1:n_wav
         hold on
         sound(y1, Fs);
         title('CLICK CENTRE OF SIBILANT')
-        g1 = ginput(1);
-        g1 = g1(1);
+        % g1 = ginput(1);
+        % g1 = g1(1);
+        g1 = clicks(i);
         sib_centre(i) = g1;
         subplot(2,1,1)
         xline([g1, g1], 'r--', 'LineWidth', 1);
@@ -80,6 +82,8 @@ for i=1:n_wav
         hold off
         sib_cog(i) = c1;
         sib_cog_fb(i) = c2;
+        drawnow
+        pause(0.500)
     end
 end
 
