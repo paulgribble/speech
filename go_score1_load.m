@@ -1,5 +1,6 @@
 function out = go_score1_load(clicks)
 
+
 selpath = uigetdir;
 if isdir(selpath)
     file_list = dir(selpath + "/" + "*.wav");
@@ -17,6 +18,7 @@ token_end = zeros(1,n_wav);
 sib_centre = zeros(1,n_wav);
 sib_cog = zeros(1,n_wav);
 sib_cog_fb = zeros(1,n_wav);
+fb_delay = zeros(1,n_wav);
 
 figure('position',[397 561 1386 702])
 
@@ -57,10 +59,8 @@ for i=1:n_wav
         colorbar('eastoutside')
         xlim([t(i1),t(i2)])
         hold on
-%        sound(y1, Fs);
+        sound(y1, Fs);
         title('CLICK CENTRE OF SIBILANT')
-        % g1 = ginput(1);
-        % g1 = g1(1);
         g1 = clicks(i);
         sib_centre(i) = g1;
         subplot(2,1,1)
@@ -68,13 +68,21 @@ for i=1:n_wav
         subplot(2,1,2)
         xline([g1, g1], 'r--', 'LineWidth', 1);
         [c1,skew1,kurt1,z1,f1] = ComputeCOG(y(:,1),Fs,g1);
-        [c2,skew2,kurt2,z2,f2] = ComputeCOG(y(:,2),Fs,g1);
+        [r,lags] = xcorr(y(i1:i2,1),y(i1:i2,2));
+        [yy,ii] = max(r);
+        fb_delay_i = -lags(ii)/Fs;
+        fb_delay(i) = fb_delay_i;
+        g2 = g1 + fb_delay_i;
+        [c2,skew2,kurt2,z2,f2] = ComputeCOG(y(:,2),Fs,g2);
         c1_msg = sprintf('the spectral centroid at the mic is        %.0f Hz', round(c1));
         c2_msg = sprintf('the spectral centroid at the headphones is %.0f Hz', round(c2));
+        fb_delay_msg = sprintf('the feedback delay is %.3f ms', fb_delay_i*1000);
         disp(c1_msg)
         disp(c2_msg)
+        disp(fb_delay_msg)
         title(c1_msg)
         yline([c1, c1]/1000, 'r--', 'LineWidth', 1);
+    %    pause(0.5)
         subplot(2,1,1)
         hold off
         subplot(2,1,2)
@@ -82,7 +90,7 @@ for i=1:n_wav
         sib_cog(i) = c1;
         sib_cog_fb(i) = c2;
         drawnow
-        pause(0.500)
+        pause(0.350)
     end
 end
 
@@ -96,8 +104,9 @@ token_end = token_end';
 sib_centre = sib_centre';
 sib_cog = sib_cog';
 sib_cog_fb = sib_cog_fb';
+fb_delay = fb_delay';
 
-out_table = table(filedir, filename, participant, trial_num, token, token_start, token_end, sib_centre, sib_cog, sib_cog_fb);
+out_table = table(filedir, filename, participant, trial_num, token, token_start, token_end, sib_centre, sib_cog, sib_cog_fb, fb_delay);
 
 csv_filename = input('ENTER FILENAME FOR .csv FILE: ',"s");
 writetable(out_table, csv_filename);
