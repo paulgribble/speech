@@ -57,7 +57,7 @@ for i=1:n_wav
         colorbar('eastoutside')
         xlim([t(i1),t(i2)])
         hold on
-        sound(y1, Fs);
+%        sound(y1, Fs);
         title('CLICK CENTRE OF SIBILANT')
         % g1 = ginput(1);
         % g1 = g1(1);
@@ -75,7 +75,6 @@ for i=1:n_wav
         disp(c2_msg)
         title(c1_msg)
         yline([c1, c1]/1000, 'r--', 'LineWidth', 1);
-    %    pause(0.5)
         subplot(2,1,1)
         hold off
         subplot(2,1,2)
@@ -114,11 +113,11 @@ plot(out_table.trial_num(i_she), out_table.sib_cog(i_she),'bs')
 plot(out_table.trial_num(i_shoe), out_table.sib_cog(i_shoe),'bo')
 plot(out_table.trial_num(i_see), out_table.sib_cog(i_see),'rs')
 plot(out_table.trial_num(i_sue), out_table.sib_cog(i_sue),'ro')
-legend({'/she/','/shoe/','/see/','/sue'}, 'location','southeast')
 plot(out_table.trial_num(i_she), out_table.sib_cog_fb(i_she),'b.')
 plot(out_table.trial_num(i_shoe), out_table.sib_cog_fb(i_shoe),'b.')
 plot(out_table.trial_num(i_see), out_table.sib_cog_fb(i_see),'r.')
 plot(out_table.trial_num(i_sue), out_table.sib_cog_fb(i_sue),'r.')
+legend({'/she/','/shoe/','/see/','/sue/','/she/ fb','/shoe/ fb','/see/ fb','/sue/ fb'}, 'location','southeast')
 grid on
 xlabel('TRIAL NUMBER')
 ylabel('SIBILANT COG (Hz)')
