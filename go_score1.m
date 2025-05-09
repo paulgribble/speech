@@ -1,6 +1,8 @@
+function out = go_score1(clicks)
+
 
 selpath = uigetdir;
-if isdir(selpath)
+if isfolder(selpath)
     file_list = dir(selpath + "/" + "*.wav");
 end
 n_wav = length(file_list);
@@ -16,6 +18,10 @@ token_end = zeros(1,n_wav);
 sib_centre = zeros(1,n_wav);
 sib_cog = zeros(1,n_wav);
 sib_cog_fb = zeros(1,n_wav);
+sib_skew = zeros(1,n_wav);
+sib_kurt = zeros(1,n_wav);
+sib_skew_fb = zeros(1,n_wav);
+sib_kurt_fb = zeros(1,n_wav);
 fb_delay = zeros(1,n_wav);
 
 figure('position',[397 561 1386 702])
@@ -34,8 +40,8 @@ for i=1:n_wav
     y1 = y(:,1); % from microphone
     y2 = y(:,2); % played over headphones
     t = 0:(1/Fs):(size(y,1)/Fs); t = t(1:end-1)';
-    mv = movvar(y2, round(Fs*0.05));
-    [yy,ii] = max(mv);
+    env = envelope(y1, round(Fs*0.05), 'rms'); % compute envelope
+    [yy,ii] = max(env); % find max to determine 'middle' of speech token
     if ii<4000
         sprintf("skipping %s ...", fname)
         sib_centre(i) = NaN;
@@ -58,9 +64,13 @@ for i=1:n_wav
         xlim([t(i1),t(i2)])
         hold on
         sound(y1, Fs);
-        title('CLICK CENTRE OF SIBILANT')
-        g1 = ginput(1);
-        g1 = g1(1);
+        if nargin==0 | isempty(clicks)
+            title('CLICK CENTRE OF SIBILANT')
+            g1 = ginput(1);
+            g1 = g1(1);
+        else
+            g1 = clicks(i);
+        end
         sib_centre(i) = g1;
         subplot(2,1,1)
         xline([g1, g1], 'r--', 'LineWidth', 1);
@@ -81,13 +91,20 @@ for i=1:n_wav
         disp(fb_delay_msg)
         title(c1_msg)
         yline([c1, c1]/1000, 'r--', 'LineWidth', 1);
-    %    pause(0.5)
         subplot(2,1,1)
         hold off
         subplot(2,1,2)
         hold off
         sib_cog(i) = c1;
         sib_cog_fb(i) = c2;
+        sib_skew(i) = skew1;
+        sib_skew_fb(i) = skew2;
+        sib_kurt(i) = kurt1;
+        sib_kurt_fb(i) = kurt2;
+        drawnow
+        if nargin==0 | isempty(clicks)
+            pause(0.350)
+        end
     end
 end
 
@@ -102,8 +119,12 @@ sib_centre = sib_centre';
 sib_cog = sib_cog';
 sib_cog_fb = sib_cog_fb';
 fb_delay = fb_delay';
+sib_skew = sib_skew';
+sib_skew_fb = sib_skew_fb';
+sib_kurt = sib_kurt';
+sib_kurt_fb = sib_kurt_fb';
 
-out_table = table(filedir, filename, participant, trial_num, token, token_start, token_end, sib_centre, sib_cog, sib_cog_fb, fb_delay);
+out_table = table(filedir, filename, participant, trial_num, token, token_start, token_end, sib_centre, sib_cog, sib_cog_fb, sib_skew, sib_skew_fb, sib_kurt, sib_kurt_fb, fb_delay);
 
 csv_filename = input('ENTER FILENAME FOR .csv FILE: ',"s");
 writetable(out_table, csv_filename);
