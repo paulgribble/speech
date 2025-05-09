@@ -1,8 +1,8 @@
-function out = go_score1_load(clicks)
+function out = go_score1b(clicks)
 
 
 selpath = uigetdir;
-if isdir(selpath)
+if isfolder(selpath)
     file_list = dir(selpath + "/" + "*.wav");
 end
 n_wav = length(file_list);
@@ -36,8 +36,8 @@ for i=1:n_wav
     y1 = y(:,1); % from microphone
     y2 = y(:,2); % played over headphones
     t = 0:(1/Fs):(size(y,1)/Fs); t = t(1:end-1)';
-    mv = movvar(y2, round(Fs*0.05));
-    [yy,ii] = max(mv);
+    env = envelope(y1, round(Fs*0.05), 'rms'); % compute envelope
+    [yy,ii] = max(env); % find max to determine 'middle' of speech token
     if ii<4000
         sprintf("skipping %s ...", fname)
         sib_centre(i) = NaN;
@@ -60,8 +60,13 @@ for i=1:n_wav
         xlim([t(i1),t(i2)])
         hold on
         sound(y1, Fs);
-        title('CLICK CENTRE OF SIBILANT')
-        g1 = clicks(i);
+        if nargin==0 | isempty(clicks)
+            title('CLICK CENTRE OF SIBILANT')
+            g1 = ginput(1);
+            g1 = g1(1);
+        else
+            g1 = clicks(i);
+        end
         sib_centre(i) = g1;
         subplot(2,1,1)
         xline([g1, g1], 'r--', 'LineWidth', 1);
@@ -82,7 +87,6 @@ for i=1:n_wav
         disp(fb_delay_msg)
         title(c1_msg)
         yline([c1, c1]/1000, 'r--', 'LineWidth', 1);
-    %    pause(0.5)
         subplot(2,1,1)
         hold off
         subplot(2,1,2)
@@ -90,7 +94,9 @@ for i=1:n_wav
         sib_cog(i) = c1;
         sib_cog_fb(i) = c2;
         drawnow
-        pause(0.350)
+        if nargin==0 | isempty(clicks)
+            pause(0.350)
+        end
     end
 end
 
