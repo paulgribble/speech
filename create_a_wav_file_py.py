@@ -1,3 +1,7 @@
+# python3.13 -m venv .venv
+# source .venv/bin/activate
+# python3.13 -m pip install -U pip
+# pip install numpy scipy matplotlib
 
 import numpy as np
 import scipy as sp
