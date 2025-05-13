@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 noise_burst_rise    = 0.010     # rise / fall time (sec)
 noise_burst_hold    = 0.030     # plateau time (sec)
 noise_burst_freq    = 1.0       # noise burst repeat frequency (Hz)
-file_duration       = 5.0       # total duration of audio file (sec)
+file_duration       = 90.0      # total duration of audio file (sec)
 sample_rate         = 44100     # sample rate (Hz)
 file_name           = "test_sound.wav"
 
