@@ -18,27 +18,19 @@ mask(1:rise_samples) = mask_hanning(1:rise_samples);
 mask(rise_samples:rise_samples+hold_samples) = 1;
 mask(rise_samples+hold_samples+1:end) = mask_hanning(rise_samples+1:end);
 
-% create pink noise (1/f noise)
-noise_array = pinknoise(file_duration * sample_rate);
-
 fprintf("creating %.3f sec of audio ...\n", file_duration)
 fprintf("%.0f ms noise bursts repeating at %.1f Hz ...\n", noise_burst_dur*1000,noise_burst_freq)
 
-% create hanning window repeating mask
-mask_array = zeros(size(noise_array));
-sound_array_samples = length(noise_array);
+% repeat noise bursts at noise_burst_freq
+sound_array = zeros(file_duration * sample_rate,1);
+sound_array_samples = length(sound_array);
 i = noise_burst_episode_samples;
 while ((i + noise_burst_episode_samples - 1) < sound_array_samples)
-	mask_array(i:i+noise_burst_samples-1) = mask;
+    hnoise = pinknoise(noise_burst_samples); % pink noise (1/f power)
+    hnoise = hnoise./max(abs(hnoise));       % normalize to [-1,1]
+    sound_array(i:i+noise_burst_samples-1) = hnoise .* mask; % apply hanning window mask
 	i = i + noise_burst_episode_samples;
 end
-
-% apply hanning mask
-sound_array = noise_array .* mask_array;
-
-% normalize to [-1,1]
-sound_array = sound_array ./ max(abs(sound_array));
-
 
 fprintf("saving %s ...\n", file_name)
 audiowrite(file_name,sound_array,sample_rate,'BitsPerSample',16);
