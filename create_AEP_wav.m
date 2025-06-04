@@ -1,5 +1,5 @@
 
-noise_burst_rise    =     0.015 ;      % rise / fall time (sec)
+noise_burst_rise    =     0.015 ;      % rise time (sec)
 noise_burst_hold    =     0.050 ;      % plateau time (sec)
 noise_burst_freq    =     1.000 ;      % noise burst repeat frequency (Hz)
 file_duration       =   101.000 ;      % total duration of audio file (sec)
