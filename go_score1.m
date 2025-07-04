@@ -49,6 +49,10 @@ for i=1:n_wav
     else
         i1 = ii-round(Fs*0.500);
         i2 = ii+round(Fs*0.500);
+        if (i2 > length(y1))
+            i1 = 1;
+            i2 = length(y1);
+        end
         token_start(i) = i1/Fs;
         token_end(i) = i2/Fs;
         subplot(2,1,1)
