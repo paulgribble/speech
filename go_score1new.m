@@ -1,5 +1,4 @@
-function out = go_score1(clicks)
-
+function out = go_score1new(clicks)
 
 selpath = uigetdir;
 if isfolder(selpath)
@@ -24,10 +23,8 @@ sib_skew_fb = zeros(1,n_wav);
 sib_kurt_fb = zeros(1,n_wav);
 fb_delay = zeros(1,n_wav);
 
-figure('position',[397 561 1386 702])
-
 for i=1:n_wav
-    fprintf("file %3d/%3d ... \n", i, n_wav);
+    fprintf("file %3d/%3d : %s ... \n", i, n_wav, file_list(i).name);
     f = file_list(i).name;
     f_parts = strsplit(f,'_');
     trial_num(i) = str2num(f_parts{6});
@@ -40,48 +37,12 @@ for i=1:n_wav
     y1 = y(:,1); % from microphone
     y2 = y(:,2); % played over headphones
     t = 0:(1/Fs):(size(y,1)/Fs); t = t(1:end-1)';
-    env = envelope(y1, round(Fs*0.05), 'rms'); % compute envelope
-    [yy,ii] = max(env); % find max to determine 'middle' of speech token
-    if ii<4000
-        sprintf("skipping %s ...", fname)
-        sib_centre(i) = NaN;
-        sib_cog(i) = NaN;
-    else
-        i1 = ii-round(Fs*0.500);
-        i2 = ii+round(Fs*0.500);
-        if (i2 > length(y1))
-            i1 = 1;
-            i2 = length(y1);
-        end
-        token_start(i) = i1/Fs;
-        token_end(i) = i2/Fs;
-        subplot(2,1,1)
-        tt = t(i1:i2);
-        y1 = y1(i1:i2);
-        plot(tt,y1)
-        colorbar
-        xlim([tt(1),tt(end)])
-        title(file_list(i).name, 'Interpreter', 'none')
-        subplot(2,1,2)
-        spectrogram(y(:,1), 256, 230, 256, Fs, 'yaxis')
-        colorbar('eastoutside')
-        xlim([t(i1),t(i2)])
-        hold on
-        sound(y1, Fs);
-        if nargin==0 | isempty(clicks)
-            title('CLICK CENTRE OF SIBILANT')
-            g1 = ginput(1);
-            g1 = g1(1);
-        else
-            g1 = clicks(i);
-        end
-        sib_centre(i) = g1;
-        subplot(2,1,1)
-        xline([g1, g1], 'r--', 'LineWidth', 1);
-        subplot(2,1,2)
-        xline([g1, g1], 'r--', 'LineWidth', 1);
+    sound(y1, Fs);
+    g1 = plotWithSkipButton(y1,t,Fs,file_list(i).name);
+    sib_centre(i) = g1;
+    if ~isnan(g1)
         [c1,skew1,kurt1,z1,f1] = ComputeCOG(y(:,1),Fs,g1);
-        [r,lags] = xcorr(y(i1:i2,1),y(i1:i2,2));
+        [r,lags] = xcorr(y(:,1),y(:,2));
         [yy,ii] = max(r);
         fb_delay_i = -lags(ii)/Fs;
         fb_delay(i) = fb_delay_i;
@@ -93,23 +54,23 @@ for i=1:n_wav
         disp(c1_msg)
         disp(c2_msg)
         disp(fb_delay_msg)
-        title(c1_msg)
-        yline([c1, c1]/1000, 'r--', 'LineWidth', 1);
-        subplot(2,1,1)
-        hold off
-        subplot(2,1,2)
-        hold off
         sib_cog(i) = c1;
         sib_cog_fb(i) = c2;
         sib_skew(i) = skew1;
         sib_skew_fb(i) = skew2;
         sib_kurt(i) = kurt1;
         sib_kurt_fb(i) = kurt2;
-        drawnow
-        if nargin==0 | isempty(clicks)
-            pause(0.350)
-        end
+    else
+        sib_cog(i) = NaN;
+        sib_cog_fb(i) = NaN;
+        sib_skew(i) = NaN;
+        sib_skew_fb(i) = NaN;
+        sib_kurt(i) = NaN;
+        sib_kurt_fb(i) = NaN;
+        fb_delay(i) = NaN;
     end
+    drawnow
+    pause(0.350)
 end
 
 filedir = filedir';
@@ -117,8 +78,6 @@ filename = filename';
 participant = participant';
 trial_num = trial_num';
 token = token';
-token_start = token_start';
-token_end = token_end';
 sib_centre = sib_centre';
 sib_cog = sib_cog';
 sib_cog_fb = sib_cog_fb';
@@ -128,7 +87,7 @@ sib_skew_fb = sib_skew_fb';
 sib_kurt = sib_kurt';
 sib_kurt_fb = sib_kurt_fb';
 
-out_table = table(filedir, filename, participant, trial_num, token, token_start, token_end, sib_centre, sib_cog, sib_cog_fb, sib_skew, sib_skew_fb, sib_kurt, sib_kurt_fb, fb_delay);
+out_table = table(filedir, filename, participant, trial_num, token, sib_centre, sib_cog, sib_cog_fb, sib_skew, sib_skew_fb, sib_kurt, sib_kurt_fb, fb_delay);
 
 csv_filename = input('ENTER FILENAME FOR .csv FILE: ',"s");
 writetable(out_table, csv_filename);
@@ -156,3 +115,4 @@ title(out_table.filedir(1), 'interpreter','none')
 fig_fname = strsplit(csv_filename,'.');
 fig_fname = fig_fname(1) + ".png";
 saveas(f1, fig_fname)
+
