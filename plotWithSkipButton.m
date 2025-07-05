@@ -24,6 +24,8 @@ function xLocation = plotWithSkipButton(y,t,Fs,fname)
     set(fig, 'WindowButtonDownFcn', @(src, event) clickCallback(fig));
     set(fig, 'ToolBar', 'none')
 
+    sound(y, Fs);
+
     % Wait for user input
     uiwait(fig);
 

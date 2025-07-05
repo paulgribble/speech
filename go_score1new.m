@@ -37,7 +37,6 @@ for i=1:n_wav
     y1 = y(:,1); % from microphone
     y2 = y(:,2); % played over headphones
     t = 0:(1/Fs):(size(y,1)/Fs); t = t(1:end-1)';
-    sound(y1, Fs);
     g1 = plotWithSkipButton(y1,t,Fs,file_list(i).name);
     sib_centre(i) = g1;
     if ~isnan(g1)
