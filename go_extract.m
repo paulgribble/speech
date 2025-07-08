@@ -36,7 +36,7 @@ sib_kurt_fb = zeros(1,n_wav);
 fb_delay = zeros(1,n_wav);
 
 
-for i=1:n_wav
+parfor i=1:n_wav
     if noPathGiven
         selpath = T.filedir(i);
     end
@@ -44,7 +44,7 @@ for i=1:n_wav
     filedir(i) = selpath;
     filename(i) = T.filename(i);
     % load in the .wav file
-    fprintf("reading %s\n", fname);
+    fprintf("file %3d/%3d : %s ... \n", i, n_wav, fname);
     [y,Fs] = audioread(fname);
     y_mic = y(:,1); % from microphone
     y_ear = y(:,2); % played over headphones
@@ -54,8 +54,8 @@ for i=1:n_wav
     if (i_scored>0)
 
         % compute COG measures for microphone signal
-        % averaging over 5 windows around the scored point
-        windowOffsets = [-10, -5, 0, 5, 10] / 1000; % ms to seconds
+        % averaging over several windows around the scored point
+        windowOffsets = [-10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10] / 1000; % ms to seconds
         t = i_scored/Fs + windowOffsets;
         windowSize = 50; % ms
         [c1,skew1,kurt1,z1,f1] = ComputeCOG(y_mic, Fs, t, "WSIZE", windowSize);
