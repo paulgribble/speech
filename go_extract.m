@@ -1,4 +1,4 @@
-function out = go_extract(fname_scored_pts, selpath)
+function out = go_extract(fname_scored_pts)
 
 % go_extract : Given a filename of a .csv file produced by go_score.m,
 % go_extract will load each .wav file listed in the .csv file, and use the
@@ -37,11 +37,8 @@ fb_delay = zeros(1,n_wav);
 
 
 parfor i=1:n_wav
-    if noPathGiven
-        selpath = T.filedir(i);
-    end
-    fname = selpath + "/" + T.filename(i);
-    filedir(i) = selpath;
+    fname = T.filedir(i) + "/" + T.filename(i);
+    filedir(i) = T.filedir(i);
     filename(i) = T.filename(i);
     % load in the .wav file
     fprintf("file %3d/%3d : %s ... \n", i, n_wav, fname);
