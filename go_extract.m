@@ -36,7 +36,7 @@ sib_kurt_fb = zeros(1,n_wav);
 fb_delay = zeros(1,n_wav);
 
 
-parfor i=1:n_wav
+for i=1:n_wav
     fname = T.filedir(i) + "/" + T.filename(i);
     filedir(i) = T.filedir(i);
     filename(i) = T.filename(i);
