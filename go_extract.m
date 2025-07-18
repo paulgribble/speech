@@ -37,7 +37,7 @@ fb_delay = zeros(1,n_wav);
 
 
 for i=1:n_wav
-    fname = T.filedir(i) + "/" + T.filename(i);
+    fname = T.filedir(i) + filesep + T.filename(i);
     filedir(i) = T.filedir(i);
     filename(i) = T.filename(i);
     % load in the .wav file
