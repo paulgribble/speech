@@ -88,9 +88,10 @@ for i=1:n_wav
 
     f = T.filename(i);
     f_parts = strsplit(f,'_');
-    trial_num(i) = str2num(f_parts{6});
-    participant(i) = f_parts{1};
-    token(i) = f_parts{2};
+    trial_num(i) = str2num(f_parts{end-1});
+    token(i) = f_parts{end-5};
+    n_parts = length(f_parts);
+    participant(i) = join(f_parts(1:n_parts-6),"_");
 
 end
 
