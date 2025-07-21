@@ -56,6 +56,7 @@ sib_end_vec   = round(sib_end_vec*Fs);   % sec to samples
 selpath_col = repmat(selpath, n_wav, 1); % Create a cell array with selpath repeated n_wav times
 T = table(selpath_col, filename', sib_start_vec, sib_end_vec, 'VariableNames', {'filedir','filename','sib_start','sib_end'});
 writetable(T, fname_out, "WriteVariableNames",true);
+fprintf("Saved %d rows to %s\n", n_wav, fname_out)
 
 if nargout>0
     out = T;
