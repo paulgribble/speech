@@ -46,14 +46,16 @@ for i=1:n_wav
     y_mic = y(:,1); % from microphone
     y_ear = y(:,2); % played over headphones
     % extract scored point from .csv file
-    i_scored = T.scoredpoints(i);
+    i1_scored = T.sib_start(i);
+    i2_scored = T.sib_end(i);
 
-    if (i_scored>0)
+    if (i1_scored>0)
 
         % compute COG measures for microphone signal
         % averaging over several windows around the scored point
         windowOffsets = [-10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10] / 1000; % ms to seconds
-        t = i_scored/Fs + windowOffsets;
+        i_sib_centre = round(i1_scored + (i2_scored-i1_scored)/2);
+        t = i_sib_centre/Fs + windowOffsets;
         windowSize = 50; % ms
         [c1,skew1,kurt1,z1,f1] = ComputeCOG(y_mic, Fs, t, "WSIZE", windowSize);
         
@@ -67,7 +69,8 @@ for i=1:n_wav
         % compute COG measures for headphone signal
         [c2,skew2,kurt2,z2,f2] = ComputeCOG(y_ear, Fs, t+fb_delay_t, "WSIZE", windowSize);
         
-        sib_centre(i) = i_scored/Fs;
+        sib_start(i) = T.sib_start(i)/Fs;
+        sib_end(i) = T.sib_end(i)/Fs;
         sib_cog(i) = mean(c1);
         sib_cog_fb(i) = mean(c2);
         sib_skew(i) = mean(skew1);
@@ -76,7 +79,8 @@ for i=1:n_wav
         sib_kurt_fb(i) = mean(kurt2);
 
     else
-        sib_centre(i) = NaN;
+        sib_start(i) = NaN;
+        sib_end(i) = NaN;
         fb_delay(i) = NaN;
         sib_cog(i) = NaN;
         sib_cog_fb(i) = NaN;
@@ -100,7 +104,8 @@ filename = filename';
 participant = participant';
 trial_num = trial_num';
 token = token';
-sib_centre = sib_centre';
+sib_start = sib_start';
+sib_end = sib_end';
 sib_cog = sib_cog';
 sib_cog_fb = sib_cog_fb';
 fb_delay = fb_delay';
@@ -109,7 +114,7 @@ sib_skew_fb = sib_skew_fb';
 sib_kurt = sib_kurt';
 sib_kurt_fb = sib_kurt_fb';
 
-out_table = table(filedir, filename, participant, trial_num, token, sib_centre, sib_cog, sib_cog_fb, sib_skew, sib_skew_fb, sib_kurt, sib_kurt_fb, fb_delay);
+out_table = table(filedir, filename, participant, trial_num, token, sib_start, sib_end, sib_cog, sib_cog_fb, sib_skew, sib_skew_fb, sib_kurt, sib_kurt_fb, fb_delay);
 
 [~, name, ext] = fileparts(fname_scored_pts);
 name = replace(name, '_scored', '');
