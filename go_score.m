@@ -15,12 +15,10 @@ function out = go_score(selpath, n_wav)
 % Output:
 %   Returns a table with file paths, names, and sibilant start/end in samples.
 
-    % Prompt for folder if not provided
     if nargin == 0
         selpath = uigetdir;
     end
 
-    % Get list of .wav files in the folder
     if isfolder(selpath)
         file_list = dir(fullfile(selpath, "*.wav"));
     else
@@ -33,29 +31,31 @@ function out = go_score(selpath, n_wav)
 
     fprintf("Found %d .wav files in %s\n", n_wav, selpath);
 
-    % Prepare output file name
     tmp = strsplit(selpath, filesep);
     fname_out = tmp{end} + "_scored.csv";
     fprintf("Will save sample points to %s\n", fname_out);
 
-    % Initialize storage
-    sib_start_vec = zeros(n_wav, 1);
-    sib_end_vec   = zeros(n_wav, 1);
+    sib_start_vec = nan(n_wav, 1);
+    sib_end_vec   = nan(n_wav, 1);
     filename      = strings(n_wav, 1);
 
-    % Process each .wav file
+    quit_flag = false;
+
     for i = 1:n_wav
         fprintf("File %3d/%3d : %s\n", i, n_wav, file_list(i).name);
         fname = fullfile(file_list(i).folder, file_list(i).name);
         filename(i) = file_list(i).name;
 
         [y, Fs] = audioread(fname);
-        y1 = y(:, 1); % Microphone input
+        y1 = y(:, 1); % Mic input
         t = (0:(size(y,1)-1)) / Fs;
 
-        [sib_start, sib_end] = plotWithSkipButton(y1, t, Fs, file_list(i).name);
+        [sib_start, sib_end, quit_flag] = plotWithSkipButton(y1, t, Fs, file_list(i).name);
+        if quit_flag
+            fprintf("User pressed QUIT. Aborting...\n");
+            break;
+        end
 
-        % Use 0 for skipped files
         if isnan(sib_start)
             sib_start = 0;
             sib_end   = 0;
@@ -65,14 +65,12 @@ function out = go_score(selpath, n_wav)
         sib_end_vec(i)   = sib_end;
 
         drawnow;
-        pause(0.35); % brief pause for stability
+        pause(0.35);
     end
 
-    % Convert seconds to samples
     sib_start_vec = round(sib_start_vec * Fs);
     sib_end_vec   = round(sib_end_vec * Fs);
 
-    % Write to CSV
     selpath_col = repmat(selpath, n_wav, 1);
     T = table(selpath_col, filename, sib_start_vec, sib_end_vec, ...
         'VariableNames', {'filedir', 'filename', 'sib_start', 'sib_end'});
@@ -85,15 +83,15 @@ function out = go_score(selpath, n_wav)
     end
 end
 
-function [sib_start, sib_end] = plotWithSkipButton(y, t, Fs, fname)
+function [sib_start, sib_end, quit_flag] = plotWithSkipButton(y, t, Fs, fname)
 % GUI tool to visualize audio, identify sibilant region, and allow drag adjustment.
 
-    % Create full-screen figure
+    quit_flag = false;
+
     screenSize = get(0, 'ScreenSize');
     fig = figure('Position', [1, screenSize(4)-800, 2400, 800], ...
                  'MenuBar', 'none', 'ToolBar', 'none');
 
-    % Plot waveform
     subplot(2,1,1); hold on;
     plot(t, y);
     title('CLICK CENTRE OF SIBILANT');
@@ -102,27 +100,25 @@ function [sib_start, sib_end] = plotWithSkipButton(y, t, Fs, fname)
     xlim([t(1), t(end)]);
     sgtitle(fname, 'Interpreter', 'none');
 
-    % Plot spectrogram
     subplot(2,1,2); hold on;
     spectrogram(y, 256, 230, 256, Fs, 'yaxis');
     xlim([t(1), t(end)]);
     colorbar('eastoutside');
 
-    % Add buttons
     uicontrol('Style', 'pushbutton', 'String', 'Skip', ...
               'Position', [20, 20, 60, 30], ...
               'Callback', @(~,~) skipCallback());
     uicontrol('Style', 'pushbutton', 'String', 'Accept', ...
               'Position', [120, 20, 60, 30], ...
               'Callback', @(~,~) acceptCallback());
+    uicontrol('Style', 'pushbutton', 'String', 'Quit', ...
+              'Position', [220, 20, 60, 30], ...
+              'Callback', @(~,~) quitCallback());
 
-    % Play audio
     sound(y, Fs);
 
-    % Automatically estimate sibilant region
     [sib_start, sib_end] = IdentifySibilant(y, Fs);
 
-    % Plot draggable lines
     subplot(2,1,1);
     p1_start = plot([sib_start, sib_start], ylim, 'g-', 'LineWidth', 2);
     p1_end   = plot([sib_end, sib_end], ylim, 'r-', 'LineWidth', 2);
@@ -133,9 +129,7 @@ function [sib_start, sib_end] = plotWithSkipButton(y, t, Fs, fname)
     setupLinkedDraggableLine(p1_start, p2_start);
     setupLinkedDraggableLine(p1_end, p2_end);
 
-    uiwait(fig); % Wait for user
-
-    % Nested helper functions
+    uiwait(fig);
 
     function skipCallback()
         sib_start = NaN;
@@ -147,6 +141,14 @@ function [sib_start, sib_end] = plotWithSkipButton(y, t, Fs, fname)
     function acceptCallback()
         sib_start = p1_start.XData(1);
         sib_end   = p1_end.XData(1);
+        uiresume(fig);
+        close(fig);
+    end
+
+    function quitCallback()
+        sib_start = NaN;
+        sib_end   = NaN;
+        quit_flag = true;
         uiresume(fig);
         close(fig);
     end
@@ -191,10 +193,6 @@ function [s_start, s_end] = IdentifySibilant(source, sr)
 % IdentifySibilant - Identify the start and end of a sibilant
 %
 % usage:  [s_start, s_end] = IdentifySibilant(source, sr)
-%
-% Given signal vector `source` sampled at `sr` Hz, this function
-% returns the start and end times (in seconds) of a sibilant region.
-% Assumes speech signal contains a /s/ as in "see", "she", etc.
 
     wSize = 30;              % RMS and ZC window size in ms
     RMSthr = 0.05;           % low energy threshold
@@ -209,15 +207,15 @@ function [s_start, s_end] = IdentifySibilant(source, sr)
     zc = smooth(zc(ws2*2+1:end), ws);
     zc = zc ./ max(abs(zc));
 
-    zc(rms < RMSthr) = 0;    % suppress low-energy regions
+    zc(rms < RMSthr) = 0;
 
     idx = find(zc > 0.5);
     if isempty(idx)
         s_start = 0;
         s_end = 0;
     else
-        hts = idx([1 end]);        % start and end in samples
-        ht = (hts - 1) / sr;       % convert to seconds
+        hts = idx([1 end]);
+        ht = (hts - 1) / sr;
         s_start = ht(1);
         s_end = ht(2);
     end
