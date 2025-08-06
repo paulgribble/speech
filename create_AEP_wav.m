@@ -32,7 +32,10 @@ while ((i + noise_burst_episode_samples - 1) < sound_array_samples)
 	i = i + noise_burst_episode_samples;
 end
 
-fprintf("saving %s ...\n", file_name)
-audiowrite(file_name,sound_array,sample_rate,'BitsPerSample',16);
+% Create stereo array: duplicate sound_array into two channels
+stereo_array = [sound_array, sound_array];
+
+fprintf("saving %s (stereo) ...\n", file_name)
+audiowrite(file_name, stereo_array, sample_rate, 'BitsPerSample', 16);
 
 

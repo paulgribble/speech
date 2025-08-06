@@ -36,25 +36,47 @@ while ((i + noise_burst_episode_samples - 1) < sound_array_samples):
 # convert to 16 bit int format
 sound_array = np.int16(sound_array * 32767)
 
-print(f"saving {file_name}")
-sp.io.wavfile.write(file_name, sample_rate, sound_array)
+# create stereo signal: same in both L and R channels
+stereo_array = np.column_stack((sound_array, sound_array))
+
+print(f"saving {file_name} (stereo)")
+sp.io.wavfile.write(file_name, sample_rate, stereo_array)
 
 
-# read a .wav file and play it over the sound device
-
+# Read the WAV file (stereo: shape = [samples, 2])
 sample_rate, y = sp.io.wavfile.read(file_name)
 
-# plot a spectrogram
+# Check shape
+if y.ndim != 2 or y.shape[1] != 2:
+    raise ValueError("Expected a stereo WAV file with 2 channels")
 
-spectrogram_filename = "spectrogram.png"
-t = np.arange(len(y)) / sample_rate
-f,t,Sxx = sp.signal.spectrogram(y, fs=sample_rate, nfft=1024)
-fig = plt.figure(figsize=(6,4))
-plt.pcolormesh(t,f,Sxx)
-plt.xlabel('TIME (s)')
-plt.ylabel('FREQUENCY (Hz)')
-plt.title(file_name)
+# Split channels
+left_channel = y[:, 0]
+right_channel = y[:, 1]
+
+# Compute spectrograms
+f_L, t_L, Sxx_L = sp.signal.spectrogram(left_channel, fs=sample_rate, nfft=1024)
+f_R, t_R, Sxx_R = sp.signal.spectrogram(right_channel, fs=sample_rate, nfft=1024)
+
+# Plot both
+spectrogram_filename = "spectrogram_stereo.png"
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
+
+pcm1 = ax1.pcolormesh(t_L, f_L, Sxx_L, shading='gouraud')
+ax1.set_title('Left Channel')
+ax1.set_ylabel('Frequency (Hz)')
+
+pcm2 = ax2.pcolormesh(t_R, f_R, Sxx_R, shading='gouraud')
+ax2.set_title('Right Channel')
+ax2.set_xlabel('Time (s)')
+ax2.set_ylabel('Frequency (Hz)')
+
+fig.suptitle(file_name)
 plt.tight_layout()
+plt.subplots_adjust(top=0.9)  # make room for title
+
+# Save figure
 print(f"saving spectrogram {spectrogram_filename}")
 fig.savefig(spectrogram_filename, dpi=300)
+
 
