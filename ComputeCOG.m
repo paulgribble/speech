@@ -85,7 +85,7 @@ for ti = 1 : nOffs
 % compute tapered power spectrum
 	nw = (nTaper + 1) / 2;
 	[q,f] = pmtm(sw,nw,[],sRate);
-	q = 10 * log10(q);
+%	q = 10 * log10(q); % March 2026 PLG & JC & MT decided better in power
 	z(:,ti) = q;
 
 % compute spectral moments
