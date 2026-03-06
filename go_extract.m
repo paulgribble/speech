@@ -1,4 +1,4 @@
-function out = go_extract(fname_scored_pts)
+function out = go_extract(fname_scored_pts, verbose)
 
 % go_extract : Given a filename of a .csv file produced by go_score.m,
 % go_extract will load each .wav file listed in the .csv file, and use the
@@ -36,13 +36,16 @@ sib_kurt_fb = zeros(1,n_wav);
 fb_delay = zeros(1,n_wav);
 
 
-for i=1:n_wav
+parfor i=1:n_wav
     fname = T.filedir(i) + filesep + T.filename(i);
     filedir(i) = T.filedir(i);
     filename(i) = T.filename(i);
     % load in the .wav file
-    fprintf("file %3d/%3d : %s ... \n", i, n_wav, fname);
-    [y,Fs] = audioread(fname);
+    if verbose fprintf("file %3d/%3d : %s ... \n", i, n_wav, fname); end
+    if ~isfile(fname)
+        error('File not found: %s', fname);
+    end
+    [y, Fs] = audioread(fname);
     y_mic = y(:,1); % from microphone
     y_ear = y(:,2); % played over headphones
     % extract scored point from .csv file
@@ -120,6 +123,7 @@ out_table = table(filedir, filename, participant, trial_num, token, sib_start, s
 name = replace(name, '_scored', '');
 csv_filename = name + "_extracted" + ext;
 
+out_table = sortrows(out_table, 'trial_num');
 writetable(out_table, csv_filename, "WriteVariableNames",true);
 
 fprintf("wrote to %s\n", csv_filename);
