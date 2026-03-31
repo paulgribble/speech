@@ -89,7 +89,7 @@ for ti = 1 : nOffs
 	z(:,ti) = q;
 
 % compute spectral moments
-	q = q - min(q);	% P. Gribble: ensure spectral orientation retained for z < 0
+%	q = q - min(q);	% P. Gribble: ensure spectral orientation retained for z < 0
 	p = q ./ sum(q);		% normalized power
 	COG(ti) = sum(f .* p);	% weighted spectral mean (COG)
 	CF = f - COG(ti);		% centered frequencies
