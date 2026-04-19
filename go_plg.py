@@ -35,7 +35,12 @@ sns.lineplot(data=d, x="Bin", y="MeanERP", hue="Participant",
              marker="o", ax=ax, legend=False)
 ax.set_xlabel("Bin")
 ax.set_ylabel("Mean ERP")
+ax.set_xlim([0.5, 6.5])
+ax.set_ylim([0.5, 8])
+ax.set_yticks([1, 2, 3, 4, 5, 6, 7])
 sns.despine()
+ax.spines['bottom'].set_bounds(1,6)
+ax.spines['left'].set_bounds(1,7)
 plt.tight_layout()
 fname = "plot1_individual_trajectories.png"
 print(f"saving plot to {fname}")
@@ -43,16 +48,20 @@ plt.savefig(fname, dpi=150)
 plt.close()
 
 # Plot 2: group mean +/- 95% within-subject CI (Cousineau-Morey)
-summary = cousineau_morey_ci(d, 'Participant', 'Bin', 'MeanERP')
+bin_means = cousineau_morey_ci(d, 'Participant', 'Bin', 'MeanERP')
 
 fig, ax = plt.subplots(figsize=(4, 4))
-ax.errorbar(summary["Bin"], summary["mean"],
-            yerr=summary["ci_half_width"], fmt="o-", color="black",
+ax.errorbar(bin_means["Bin"], bin_means["mean"],
+            yerr=bin_means["ci_half_width"], fmt="o-", color="black",
             capsize=4, linewidth=1.5)
 ax.set_xlabel("Bin")
 ax.set_ylabel("Mean ERP")
-ax.set_ylim([2, 7])
+ax.set_ylim([2.5, 7])
+ax.set_yticks([3, 4, 5, 6])
+ax.set_xlim([0.5, 6.5])
 sns.despine()
+ax.spines['bottom'].set_bounds(1,6)
+ax.spines['left'].set_bounds(3,6)
 plt.tight_layout()
 fname = "plot2_group_mean_ci.png"
 print(f"saving plot to {fname}")
