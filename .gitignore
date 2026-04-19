@@ -1,2 +1,4 @@
 .DS_Store
 .Rhistory
+uv.lock
+.python-version

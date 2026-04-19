@@ -10,21 +10,28 @@ d %>%
   geom_line() +
   theme_bw()
 
-d %>%
+J <- n_distinct(d %>% filter(Bin <= 6) %>% pull(Bin))
+
+d_ws <- d %>%
   filter(Bin <= 6) %>%
+  group_by(Participant) %>%
+  mutate(MeanERP_norm = MeanERP - mean(MeanERP) + mean(d$MeanERP[d$Bin <= 6])) %>%
+  ungroup()
+
+d_ws %>%
   group_by(Bin) %>%
   summarize(
     Mean = mean(MeanERP),
-    SEM  = sd(MeanERP) / sqrt(n()),
+    CI95 = sd(MeanERP_norm) / sqrt(n()) * sqrt(J / (J - 1)) * qt(0.975, df = n() - 1),
     .groups = "drop"
   ) %>%
   ggplot(aes(x = Bin, y = Mean)) +
-  geom_point(data = d %>% filter(Bin <= 6),
+  geom_point(data = d_ws,
              aes(x = Bin, y = MeanERP, group = Participant),
              color = "grey50", alpha = 0.3, inherit.aes = FALSE) +
   geom_point() +
   geom_line() +
-  geom_errorbar(aes(ymin = Mean - SEM, ymax = Mean + SEM), width = 0.2) +
+  geom_errorbar(aes(ymin = Mean - CI95, ymax = Mean + CI95), width = 0.2) +
   labs(y = "Mean ERP") +
   theme_bw()
 
@@ -37,3 +44,6 @@ d_rm <- d %>%
   )
 
 summary(aov(MeanERP ~ Bin + Error(Participant/Bin), data = d_rm))
+
+# Post-hoc pairwise paired t-tests with Holm correction
+pairwise.t.test(d_rm$MeanERP, d_rm$Bin, paired = TRUE, p.adjust.method = "holm")
