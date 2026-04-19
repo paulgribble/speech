@@ -1,13 +1,3 @@
-# /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#   "pandas",
-#   "seaborn",
-#   "matplotlib",
-#   "pingouin",
-# ]
-# ///
-
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
