@@ -37,10 +37,9 @@ ax.set_xlabel("Bin")
 ax.set_ylabel("Mean ERP")
 ax.set_xlim([0.5, 6.5])
 ax.set_ylim([0.5, 8])
-ax.set_yticks([1, 2, 3, 4, 5, 6, 7])
 sns.despine()
 ax.spines['bottom'].set_bounds(1,6)
-ax.spines['left'].set_bounds(1,7)
+ax.spines['left'].set_bounds(1,8)
 plt.tight_layout()
 fname = "plot1_individual_trajectories.png"
 print(f"saving plot to {fname}")
@@ -70,11 +69,16 @@ plt.close()
 
 # Repeated-measures ANOVA: MeanERP ~ Bin (within subjects)
 aov = pg.rm_anova(data=d, dv="MeanERP", within="Bin", subject="Participant", detailed=True)
-print("\nRepeated Measures ANOVA")
-print(aov.to_string())
 
 # Post-hoc pairwise paired t-tests with Holm correction
 posthoc = pg.pairwise_tests(data=d, dv="MeanERP", within="Bin",
                              subject="Participant", padjust="holm")
-print('\nPost-hoc Pairwise Tests:')
-print(posthoc[["A", "B", "T", "dof", "p_unc", "p_corr", "p_adjust"]].to_string())
+
+with open("stats.txt", "w") as f:
+    f.write("Repeated Measures ANOVA\n")
+    f.write("-"*25 + "\n")
+    f.write(aov.to_string() + "\n")
+    f.write("\nPost-hoc Pairwise Tests:\n")
+    f.write("-"*25 + "\n")
+    f.write(posthoc[["A", "B", "T", "dof", "p_unc", "p_corr", "p_adjust"]].to_string() + "\n")
+print("stats written to stats.txt")
