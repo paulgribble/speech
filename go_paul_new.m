@@ -11,7 +11,7 @@ addpath('eeglab')
 [ALLEEG,EEG,CURRENTSET,ALLCOM] = eeglab;
 
 %% load a datafile
-fname = 'TESTSM1P07.bdf';
+fname = 'TESTSM1P05.bdf';
 EEG = pop_biosig(fname);
 EEG_raw = EEG.data;
 
